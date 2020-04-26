@@ -4,13 +4,34 @@ use crate::style::{Style, StyledText, Symbol};
 use crate::util;
 use bytesize::ByteSize;
 use clap::ArgMatches;
+use std::slice::Iter;
 use tui::widgets::Text;
 
 /* Type of the sorting of module list */
+#[derive(Clone, Copy, Debug)]
 enum SortType {
 	None,
 	Size,
 	Name,
+	Dependent,
+}
+
+impl SortType {
+	/**
+	 * Return iterator for the sort types.
+	 *
+	 * @return Iter
+	 */
+	#[allow(dead_code)]
+	pub fn iter() -> Iter<'static, SortType> {
+		[
+			SortType::None,
+			SortType::Size,
+			SortType::Name,
+			SortType::Dependent,
+		]
+		.iter()
+	}
 }
 
 /* Listing properties of module list */
@@ -31,6 +52,8 @@ impl ListArgs {
 		if let Some(matches) = args.subcommand_matches("sort") {
 			if matches.is_present("size") {
 				sort_type = SortType::Size;
+			} else if matches.is_present("dependent") {
+				sort_type = SortType::Dependent;
 			} else {
 				sort_type = SortType::Name;
 			}
@@ -87,6 +110,7 @@ impl KernelModules<'_> {
 		match self.args.sort {
 			SortType::Size => module_read_cmd += " | sort -n -r -t ' ' -k2",
 			SortType::Name => module_read_cmd += " | sort -t ' ' -k1",
+			SortType::Dependent => module_read_cmd += " | sort -n -r -t ' ' -k3",
 			_ => {}
 		}
 		let modules_content = util::exec_cmd("sh", &["-c", &module_read_cmd])
@@ -360,8 +384,10 @@ mod tests {
 		list_args.sort = SortType::Size;
 		list_args.reverse = true;
 		let mut kernel_modules = KernelModules::new(list_args, Style::new(&args));
-		kernel_modules.args.sort = SortType::Name;
-		kernel_modules.refresh();
+		for sort_type in SortType::iter().rev().chain(SortType::iter()) {
+			kernel_modules.args.sort = *sort_type;
+			kernel_modules.refresh();
+		}
 		for direction in ScrollDirection::iter().rev().chain(ScrollDirection::iter())
 		{
 			kernel_modules.show_used_module(0);

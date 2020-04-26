@@ -66,6 +66,8 @@ kmon is written in [Rust](https://www.rust-lang.org/) and uses [tui-rs](https://
 - [Installation](#installation)
   - [Cargo](#cargo)
   - [AUR](#aur)
+  - [Copr](#copr)
+  - [Nixpkgs](#nixpkgs)
   - [Manual](#manual)
     - [Note](#note)
 - [Usage](#usage)
@@ -85,6 +87,7 @@ kmon is written in [Rust](https://www.rust-lang.org/) and uses [tui-rs](https://
   - [Loading a module](#loading-a-module)
   - [Unloading a module](#unloading-a-module)
   - [Blacklisting a module](#blacklisting-a-module)
+  - [Reloading a module](#reloading-a-module)
   - [Clearing the ring buffer](#clearing-the-ring-buffer)
   - [Copy & Paste](#copy--paste)
   - [Sorting/reversing the kernel modules](#sortingreversing-the-kernel-modules)
@@ -136,6 +139,33 @@ cargo install kmon --force
 trizen kmon
 ```
 
+### Copr
+
+**kmon** can be installed from the available [Copr package](https://copr.fedorainfracloud.org/coprs/atim/kmon/) which is maintained by [atim](https://copr.fedorainfracloud.org/coprs/atim/).
+
+```
+dnf copr enable atim/kmon
+dnf install kmon
+```
+
+### Nixpkgs
+
+**kmon** can be installed using [Nix package manager](https://nixos.org/nix/) from `nixpkgs-unstable` channel.
+
+```
+nix-channel --add https://nixos.org/channels/nixpkgs-unstable
+nix-channel --update nixpkgs
+nix-env -iA nixpkgs.kmon
+```
+
+On [NixOS](https://nixos.org/nixos/):
+
+```
+nix-channel --add https://nixos.org/channels/nixos-unstable
+nix-channel --update nixos
+nix-env -iA nixos.kmon
+```
+
 ### Manual
 
 1. Download the latest binary from [releases](https://github.com/orhun/kmon/releases).
@@ -170,7 +200,7 @@ man kmon
 [libxcb](https://xcb.freedesktop.org/) should be installed for using the copy/paste commands of X11.
 [*](https://github.com/aweinstock314/rust-clipboard/issues/67)
 
-e.g: Install `libxcb1-dev` package for Debian/Ubuntu and `libxcb-devel` package for Fedora/openSUSE/Void Linux.
+e.g: Install `libxcb1-dev` package for Debian/Ubuntu[*](https://github.com/orhun/kmon/issues/2) and `libxcb-devel` package for Fedora/openSUSE/Void Linux.
 
 ## Usage
 
@@ -205,8 +235,9 @@ sort    Sort kernel modules
 kmon sort [FLAGS]
 
 FLAGS:
-    -n, --name    Sort modules by their names
-    -s, --size    Sort modules by their sizes
+    -n, --name         Sort modules by their names
+    -s, --size         Sort modules by their sizes
+    -d, --dependent    Sort modules by their dependent modules
 ```
 
 ## Key Bindings
@@ -227,6 +258,7 @@ FLAGS:
 | `[+], i, insert`        	| Load a kernel module                   	|
 | `[-], u, backspace`     	| Unload the kernel module               	|
 | `[x], b, delete`        	| Blacklist the kernel module            	|
+| `ctrl-r, alt-r`         	| Reload the kernel module              	|
 | `y/n`                   	| Execute/cancel the command             	|
 | `c/v`                   	| Copy/paste                             	|
 | `r, F5`                 	| Refresh                                	|
@@ -321,6 +353,18 @@ if ! grep -q <module_name> /etc/modprobe.d/blacklist.conf; then
 fi
 ```
 
+### Reloading a module
+
+Use `ctrl-r` or `alt-r` key for reloading the selected module.
+
+![Reloading a module](https://dummyimage.com/900x497/000/dddddd&text=Placeholder+for+reloading+modules)
+
+The command that used for reloading a module:
+
+```
+modprobe -r <module_name> && modprobe <module_name>
+```
+
 ### Clearing the ring buffer
 
 The kernel ring buffer can be cleared with using one of the `ctrl-l/u, alt-c` keys.
@@ -341,12 +385,15 @@ Use `ctrl-c/ctrl-v` for copying and pasting while in input mode.
 
 ### Sorting/reversing the kernel modules
 
-`sort` subcommand can be used for sorting the kernel modules by their names or sizes.
+`sort` subcommand can be used for sorting the kernel modules by their names, sizes or dependent modules.
 
 ```
 kmon sort --name
 kmon sort --size
+kmon sort --dependent
 ```
+
+![Sorting the kernel modules](https://user-images.githubusercontent.com/24392180/78900376-70324780-7a7f-11ea-813e-78972fc3c880.gif)
 
 Also the `-r, --reverse` flag is used for reversing the kernel module list.
 
@@ -354,7 +401,7 @@ Also the `-r, --reverse` flag is used for reversing the kernel module list.
 kmon --reverse
 ```
 
-![Sorting/reversing the kernel modules](https://user-images.githubusercontent.com/24392180/76688765-ee4a2c80-6640-11ea-95ea-1bdfc68b3281.gif)
+![Reversing the kernel modules](https://user-images.githubusercontent.com/24392180/78901094-812f8880-7a80-11ea-85cf-2a0c6ac6354a.gif)
 
 ### Customizing the colors
 
@@ -462,7 +509,7 @@ Ubuntu 18.04                  |  openSUSE                |  Void Linux
 ### Social Media
 
 * Follow [@kmonitor_](https://twitter.com/kmonitor_) on Twitter
-* Follow the [author](https://orhun.github.io/):
+* Follow the [author](https://orhun.dev/):
     * [@orhun](https://github.com/orhun) on GitHub
     * [@orhunp_](https://twitter.com/orhunp_) on Twitter
 

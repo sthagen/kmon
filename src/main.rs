@@ -254,6 +254,16 @@ where
 								String::new(),
 							);
 						}
+						/* Reload kernel module. */
+						Key::Ctrl('r')
+						| Key::Ctrl('R')
+						| Key::Alt('r')
+						| Key::Alt('R') => {
+							kernel.modules.set_current_command(
+								ModuleCommand::Reload,
+								String::new(),
+							);
+						}
 						/* Execute the current command. */
 						Key::Char('y') | Key::Char('Y') => {
 							if kernel.modules.execute_command() {
@@ -490,6 +500,7 @@ mod tests {
 				Key::Char('n'),
 				Key::Ctrl('l'),
 				Key::Char('u'),
+				Key::Ctrl('r'),
 				Key::Char('y'),
 				Key::PageUp,
 				Key::PageDown,

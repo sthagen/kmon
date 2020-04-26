@@ -26,6 +26,7 @@ pub const KEY_BINDINGS: &[(&str, &str)] = &[
 	("+, i, insert", "load a kernel module"),
 	("-, u, backspace", "unload the kernel module"),
 	("x, b, delete", "blacklist the kernel module"),
+	("ctrl-r, alt-r", "reload the kernel module"),
 	("y/n", "execute/cancel the command"),
 	("c/v", "copy/paste"),
 	("r, f5", "refresh"),
@@ -102,6 +103,12 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
 						.short("n")
 						.long("name")
 						.help("Sort modules by their names"),
+				)
+				.arg(
+					Arg::with_name("dependent")
+						.short("d")
+						.long("dependent")
+						.help("Sort modules by their dependent modules"),
 				),
 		)
 		.get_matches()
