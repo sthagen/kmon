@@ -82,7 +82,8 @@ kmon is written in [Rust](https://www.rust-lang.org/) and uses [tui-rs](https://
     - [Smooth Scrolling](#smooth-scrolling)
   - [Kernel Information](#kernel-information)
   - [Module Information](#module-information)
-    - [Dependency Information](#dependency-information)
+    - [Displaying the dependent modules](#displaying-the-dependent-modules)
+    - [Jumping to dependent modules](#jumping-to-dependent-modules)
   - [Searching a module](#searching-a-module)
   - [Loading a module](#loading-a-module)
   - [Unloading a module](#unloading-a-module)
@@ -242,27 +243,28 @@ FLAGS:
 
 ## Key Bindings
 
-|                         	|                                        	|
-|-------------------------	|----------------------------------------	|
-|  `[?], F1`              	| Help                                   	|
-| `right/left, h/l`       	| Switch between blocks                  	|
-| `up/down, k/j, alt-k/j` 	| Scroll up/down [selected block]        	|
-| `pgup/pgdown`           	| Scroll up/down [kernel activities]     	|
-| `</>`                   	| Scroll up/down [module information]    	|
-| `alt-h/l`               	| Scroll right/left [kernel activities]  	|
-| `ctrl-t/b, home/end`    	| Scroll to top/bottom [module list]     	|
-| `ctrl-l/u, alt-c`       	| Clear the kernel ring buffer           	|
-| `[1]..[9]`              	| Show the module dependency information 	|
-| `[\], tab, backtab`    	| Show the next kernel information       	|
-| `[/], s, enter`         	| Search a kernel module                 	|
-| `[+], i, insert`        	| Load a kernel module                   	|
-| `[-], u, backspace`     	| Unload the kernel module               	|
-| `[x], b, delete`        	| Blacklist the kernel module            	|
+|                         	|                                       	|
+|-------------------------	|---------------------------------------	|
+|  `[?], F1`              	| Help                                  	|
+| `right/left, h/l`       	| Switch between blocks                 	|
+| `up/down, k/j, alt-k/j` 	| Scroll up/down [selected block]       	|
+| `pgup/pgdown`           	| Scroll up/down [kernel activities]    	|
+| `</>`                   	| Scroll up/down [module information]   	|
+| `alt-h/l`               	| Scroll right/left [kernel activities] 	|
+| `ctrl-t/b, home/end`    	| Scroll to top/bottom [module list]    	|
+| `ctrl-l/u, alt-c`       	| Clear the kernel ring buffer          	|
+| `[d], alt-d`            	| Show the dependent modules            	|
+| `[1]..[9]`              	| Jump to the dependent module           	|
+| `[\], tab, backtab`     	| Show the next kernel information      	|
+| `[/], s, enter`         	| Search a kernel module                	|
+| `[+], i, insert`        	| Load a kernel module                  	|
+| `[-], u, backspace`     	| Unload the kernel module              	|
+| `[x], b, delete`        	| Blacklist the kernel module           	|
 | `ctrl-r, alt-r`         	| Reload the kernel module              	|
-| `y/n`                   	| Execute/cancel the command             	|
-| `c/v`                   	| Copy/paste                             	|
-| `r, F5`                 	| Refresh                                	|
-| `q, ctrl-c/d, ESC`      	| Quit                                   	|
+| `y/n`                   	| Execute/cancel the command            	|
+| `c/v`                   	| Copy/paste                            	|
+| `r, F5`                 	| Refresh                               	|
+| `q, ctrl-c/d, ESC`      	| Quit                                  	|
 
 ## Features
 
@@ -302,7 +304,13 @@ The status of a kernel module is shown on selection.
 
 ![Module Information](https://user-images.githubusercontent.com/24392180/76685957-b931e000-6628-11ea-8657-76047deee681.gif)
 
-#### Dependency Information
+#### Displaying the dependent modules
+
+Use one of the `d, alt-d` keys to show all the dependent modules of the selected module.
+
+![Displaying the dependent modules](https://dummyimage.com/900x497/000/dddddd&text=Placeholder+for+displaying+dependent+modules)
+
+#### Jumping to dependent modules
 
 For jumping to a dependent kernel module from its parent module, `number keys` (1-9) can be used for specifying the index of the module on the _Used By_ column.
 
