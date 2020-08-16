@@ -11,8 +11,8 @@
     <a href="https://crates.io/crates/kmon/">
         <img src="https://img.shields.io/crates/v/kmon?color=000000&style=flat-square">
     </a>
-    <a href="https://aur.archlinux.org/packages/kmon/">
-        <img src="https://img.shields.io/aur/version/kmon?color=000000&style=flat-square">
+    <a href="https://www.archlinux.org/packages/community/x86_64/kmon/">
+        <img src="https://img.shields.io/archlinux/v/community/x86_64/kmon?color=000000&style=flat-square">
     </a>
     <br>
     <a href="https://github.com/orhun/kmon/actions?query=workflow%3A%22Continuous+Integration%22">
@@ -40,7 +40,7 @@ There are different kernel designs due to the different ways of managing system 
 Although the Linux-based operating systems dominate the most of computing, it still carries some of the design flaws which were quite a bit of debate in the early days of Linux. For example, it has the **largest footprint** and **the most complexity** over the other types of kernels. But it's a design feature that monolithic kernels inherent to have. These kind of design issues led developers to add new features and mechanisms to the Linux kernel which other kernels don't have.
 
 Unlike the standard monolithic kernels, the Linux kernel is also **modular**, accepting **loadable kernel modules (LKM)** that typically used to add support for new *hardware* (as device drivers) and/or *filesystems*, or for adding *system calls*. Since LKMs could be loaded and unloaded to the system *at runtime*, they have the advantage of extending the kernel without rebooting and re-compiling. Thus, the kernel functionalities provided by modules would not reside in memory without being used and the related module can be unloaded in order to free memory and other resources.  
-Loadable kernel modules are located in `/lib/modules` with the `.ko` (*kernel object*) extension in Linux. While the [lsmod](https://linux.die.net/man/8/lsmod) command could be used for listing the loaded kernel modules, [modprobe](https://linux.die.net/man/8/modprobe) is used for loading or unloading a kernel module.
+Loadable kernel modules are located in `/lib/modules` with the `.ko` (*kernel object*) extension in Linux. While the [lsmod](https://linux.die.net/man/8/lsmod) command could be used for listing the loaded kernel modules, [modprobe](https://linux.die.net/man/8/modprobe) or [insmod](https://linux.die.net/man/8/insmod)/[rmmod](https://linux.die.net/man/8/rmmod) is used for loading or unloading a kernel module. insmod/rmmod are used for modules independent of modprobe and without requiring an installation to ```/lib/modules/$(uname -r)```.
 
 Here's a simple example of a Linux kernel module that prints a message when it's loaded and unloaded. The build and installation steps of the [module](https://github.com/orhun/kmon/blob/master/example/lkm_example.c) using a [Makefile](https://github.com/orhun/kmon/blob/master/example/Makefile) are shown below.
 
@@ -65,8 +65,7 @@ kmon is written in [Rust](https://www.rust-lang.org/) and uses [tui-rs](https://
 ### Table of Contents
 - [Installation](#installation)
   - [Cargo](#cargo)
-  - [AUR](#aur)
-  - [Copr](#copr)
+  - [Arch Linux](#arch-linux)
   - [Nixpkgs](#nixpkgs)
   - [Manual](#manual)
     - [Note](#note)
@@ -80,6 +79,8 @@ kmon is written in [Rust](https://www.rust-lang.org/) and uses [tui-rs](https://
   - [Navigating & Scrolling](#navigating--scrolling)
     - [Scrolling Kernel Activities](#scrolling-kernel-activities)
     - [Smooth Scrolling](#smooth-scrolling)
+  - [Block Sizes](#block-sizes)
+  - [Block Positions](#block-positions)
   - [Kernel Information](#kernel-information)
   - [Module Information](#module-information)
     - [Displaying the dependent modules](#displaying-the-dependent-modules)
@@ -95,6 +96,7 @@ kmon is written in [Rust](https://www.rust-lang.org/) and uses [tui-rs](https://
   - [Customizing the colors](#customizing-the-colors)
     - [Supported colors](#supported-colors)
     - [Using a custom color](#using-a-custom-color)
+    - [Changing the accent color](#changing-the-accent-color)
   - [Unicode symbols](#unicode-symbols)
   - [Setting the terminal tick rate](#setting-the-terminal-tick-rate)
 - [Docker](#docker)
@@ -132,21 +134,18 @@ Use the `--force` option to update.
 cargo install kmon --force
 ```
 
-### AUR
+### Arch Linux
 
-**kmon** can be installed from available [AUR packages](https://aur.archlinux.org/packages/?O=0&SeB=nd&K=Linux+kernel+manager+and+activity&outdated=&SB=n&SO=a&PP=50&do_Search=Go) using an [AUR helper](https://wiki.archlinux.org/index.php/AUR_helpers). For example,
-
-```
-trizen kmon
-```
-
-### Copr
-
-**kmon** can be installed from the available [Copr package](https://copr.fedorainfracloud.org/coprs/atim/kmon/) which is maintained by [atim](https://copr.fedorainfracloud.org/coprs/atim/).
+**kmon** can be installed from the Arch Linux [official repository](https://www.archlinux.org/packages/community/x86_64/kmon/).
 
 ```
-dnf copr enable atim/kmon
-dnf install kmon
+pacman -S kmon
+```
+
+There are also [AUR packages](https://aur.archlinux.org/packages/?O=0&SeB=nd&K=Linux+kernel+manager+and+activity&outdated=&SB=n&SO=a&PP=50&do_Search=Go) available for installation. Use your favorite [AUR helper](https://wiki.archlinux.org/index.php/AUR_helpers) to install. For example,
+
+```
+yay -S kmon
 ```
 
 ### Nixpkgs
@@ -221,8 +220,9 @@ kmon [FLAGS] [OPTIONS] [SUBCOMMANDS]
 ### Options
 
 ```
--c, --color <COLOR>    Set the main color using hex or color name [default: darkgray]
--t, --tickrate <MS>    Set the refresh rate of the terminal [default: 250]
+-a, --accent-color <COLOR>    Set the accent color using hex or color name [default: white]
+-c, --color <COLOR>           Set the main color using hex or color name [default: darkgray]
+-t, --tickrate <MS>           Set the refresh rate of the terminal [default: 250]
 ```
 
 ### Subcommands
@@ -252,9 +252,11 @@ FLAGS:
 | `</>`                   	| Scroll up/down [module information]   	|
 | `alt-h/l`               	| Scroll right/left [kernel activities] 	|
 | `ctrl-t/b, home/end`    	| Scroll to top/bottom [module list]    	|
+| `alt-e/s`       	        | Expand/shrink the selected block      	|
+| `ctrl-x`         	        | Change the block position             	|
 | `ctrl-l/u, alt-c`       	| Clear the kernel ring buffer          	|
 | `[d], alt-d`            	| Show the dependent modules            	|
-| `[1]..[9]`              	| Jump to the dependent module           	|
+| `[1]..[9]`              	| Jump to the dependent module          	|
 | `[\], tab, backtab`     	| Show the next kernel information      	|
 | `[/], s, enter`         	| Search a kernel module                	|
 | `[+], i, insert`        	| Load a kernel module                  	|
@@ -292,6 +294,18 @@ Some kernel messages might be long enough for not fitting into the kernel activi
 
 ![Smooth Scrolling](https://user-images.githubusercontent.com/24392180/76685907-4aed1d80-6628-11ea-96b7-a5bc0597455b.gif)
 
+### Block Sizes
+
+`alt-e & alt-s` keys can be used for expanding/shrinking the selected block.
+
+![Block Sizes](https://user-images.githubusercontent.com/24392180/89716231-f8841300-d9b3-11ea-9cea-ee9816174336.gif)
+
+### Block Positions
+
+`ctrl-x` key can be used for changing the positions of blocks.
+
+![Block Positions](https://user-images.githubusercontent.com/24392180/90258934-e68dee80-de51-11ea-951a-ec5a301608a6.gif)
+
 ### Kernel Information
 
 Use one of the `\, tab, backtab` keys to switch between kernel release, version and platform informations.
@@ -308,7 +322,7 @@ The status of a kernel module is shown on selection.
 
 Use one of the `d, alt-d` keys to show all the dependent modules of the selected module.
 
-![Displaying the dependent modules](https://dummyimage.com/900x497/000/dddddd&text=Placeholder+for+displaying+dependent+modules)
+![Displaying the dependent modules](https://user-images.githubusercontent.com/24392180/80925098-d6b43800-8d95-11ea-8b41-da7d93fd12f8.gif)
 
 #### Jumping to dependent modules
 
@@ -331,7 +345,7 @@ For adding a module to the Linux kernel, switch to load mode with one of the `+,
 The command that used for loading a module:
 
 ```
-modprobe <module_name>
+modprobe <module_name> || insmod <module_name>.ko
 ```
 
 ### Unloading a module
@@ -343,7 +357,7 @@ Use one of the `-, u, backspace` keys to remove the selected module from the Lin
 The command that used for removing a module:
 
 ```
-modprobe -r <module_name>
+modprobe -r <module_name> || rmmod <module_name>
 ```
 
 ### Blacklisting a module
@@ -365,12 +379,12 @@ fi
 
 Use `ctrl-r` or `alt-r` key for reloading the selected module.
 
-![Reloading a module](https://dummyimage.com/900x497/000/dddddd&text=Placeholder+for+reloading+modules)
+![Reloading a module](https://user-images.githubusercontent.com/24392180/80925109-f3507000-8d95-11ea-9004-4063907f0cfc.gif)
 
 The command that used for reloading a module:
 
 ```
-modprobe -r <module_name> && modprobe <module_name>
+modprobe -r <module_name> || rmmod <module_name> && modprobe <module_name> || insmod <module_name>.ko
 ```
 
 ### Clearing the ring buffer
@@ -413,7 +427,7 @@ kmon --reverse
 
 ### Customizing the colors
 
-kmon uses the colors of the terminal as default but the highlighting color could be specified with `-c, --color` option.
+kmon uses the colors of the terminal as default but the highlighting color could be specified with `-c, --color` option. Alternatively, default text color can be set via `-a, --accent-color` option.
 
 #### Supported colors
 
@@ -434,6 +448,16 @@ kmon --color 19683a
 ```
 
 ![Using a custom color](https://user-images.githubusercontent.com/24392180/76772858-a0edcc80-67b2-11ea-86ea-9b138a0b937b.gif)
+
+#### Changing the accent color
+
+Default text color might cause readability issues on some themes that have transparency. `-a, --accent-color` option can be used similarly to the `-c, --color` option for overcoming this issue.
+
+```
+kmon --color 6f849c --accent-color e35760
+```
+
+![Changing the accent color](https://user-images.githubusercontent.com/24392180/89355576-61be0a80-d6c4-11ea-9693-f152edf5be38.gif)
 
 ### Unicode symbols
 

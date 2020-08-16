@@ -7,12 +7,80 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Add `ctrl-r, alt-r` key actions for reloading a module
+- Add alt-e/s keys for expanding/shrinking the selected block
+- Add ctrl-x key for changing the position of a block
 
 ### Fixed
+- Fix the percentage overflow in kernel module table
+- Use the default colors if the accent color is not provided
+
+## [1.4.0] - 2020-08-05
+### Added
+- Add accent color option to set default text color
+
+### Changed
+- Update README.md about accent color option
+- Update manual page about accent color option
+
+## [1.3.5] - 2020-07-30
+### Changed
+- Update README.md about Arch Linux packages
+- Update the release steps of AUR packages in CD worflow
+- Update a link in release instructions about AUR packages
+
+### Fixed
+- Continue to run the CD workflow if crates.io publish fails (for re-running the workflow)
+
+## [1.3.4] - 2020-07-30
+### Fixed
+- Update CD workflow about AUR releases
+
+## [1.3.3] - 2020-07-30
+### Changed
+- Update the release instructions about git tag command
+
+### Fixed
+- Update the repository secrets for fixing the CD workflow
+
+## [1.3.2] - 2020-07-29
+### Fixed
+- Update the publishing order in CD workflow
+
+## [1.3.1] - 2020-07-29
+### Added
+- Add CNAME record and theme config for the project page
+- Add PGP keys to CD workflow for signing the releases
+
+### Changed
+- Update README.md about Copr package
+
+## [1.3.0] - 2020-07-22
+### Added
+- Support insmod/rmmod for low-level module handling
+
+### Fixed
+- Use codecov action for uploading reports to codecov.io
+
+### Changed
+- Update Cargo dependencies to the latest version
+- Update README.md about load/unload/reload commands
+- Update the CI workflow about clippy arguments
+
+## [1.2.0] - 2020-05-03
+### Added
+- Add `ctrl-r, alt-r` key actions for reloading a module
+- Add `d, alt-d` key actions for showing the dependent modules
+
+### Fixed
+- Use Box<dyn std::error::Error> instead of failure::Error
 
 ### Changed
 - Update the date in the manual page
+- Update .gitignore about Visual Studio Code
+- Update README.md about key binding changes
+
+### Removed
+- Remove the deprecated failure crate
 
 ## [1.1.0] - 2020-04-09
 ### Added

@@ -87,7 +87,37 @@ impl Style {
 	 * @param  args
 	 * @return Style
 	 */
-	pub fn new(args: &ArgMatches) -> Self {
+	pub fn new(args: &ArgMatches<'_>) -> Self {
+		let mut default = TuiStyle::default();
+		if args.is_present("accent-color") {
+			default =
+				default.fg(Self::get_color(args, "accent-color", Color::White));
+		}
+		Self {
+			default,
+			bold: TuiStyle::default().modifier(Modifier::BOLD),
+			colored: TuiStyle::default().fg(Self::get_color(
+				args,
+				"color",
+				Color::DarkGray,
+			)),
+			unicode: Unicode::new(!args.is_present("unicode")),
+		}
+	}
+
+	/**
+	 * Parse a color value from arguments.
+	 *
+	 * @param  args
+	 * @param  arg_name
+	 * @param  default_color
+	 * @return Color
+	 */
+	fn get_color(
+		args: &ArgMatches<'_>,
+		arg_name: &str,
+		default_color: Color,
+	) -> Color {
 		let colors = map![
 			"black" => Color::Black,
 			"red" => Color::Red,
@@ -106,7 +136,7 @@ impl Style {
 			"lightcyan" => Color::LightCyan,
 			"white" => Color::White
 		];
-		let main_color = match args.value_of("color") {
+		match args.value_of(arg_name) {
 			Some(v) => *colors.get::<str>(&v.to_lowercase()).unwrap_or({
 				if let Ok(rgb) = Rgb::from_hex_str(&format!("#{}", v)) {
 					Box::leak(Box::new(Color::Rgb(
@@ -115,16 +145,10 @@ impl Style {
 						rgb.get_blue() as u8,
 					)))
 				} else {
-					&Color::DarkGray
+					&default_color
 				}
 			}),
-			None => Color::DarkGray,
-		};
-		Self {
-			default: TuiStyle::default(),
-			bold: TuiStyle::default().modifier(Modifier::BOLD),
-			colored: TuiStyle::default().fg(main_color),
-			unicode: Unicode::new(!args.is_present("unicode")),
+			None => default_color,
 		}
 	}
 }
@@ -230,6 +254,7 @@ mod tests {
 		for color in vec!["black", "000000", "lightblue", "3c70a4"] {
 			args = App::new("test")
 				.arg(Arg::with_name("color").default_value(color))
+				.arg(Arg::with_name("accent-color").default_value(color))
 				.get_matches();
 			Style::new(&args);
 		}

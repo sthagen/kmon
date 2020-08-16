@@ -19,6 +19,8 @@ pub const KEY_BINDINGS: &[(&str, &str)] = &[
 	("</>", "scroll up/down [module information]"),
 	("alt-h/l", "scroll right/left [kernel activities]"),
 	("ctrl-t/b, home/end", "scroll to top/bottom [module list]"),
+	("alt-e/s", "expand/shrink the selected block"),
+	("ctrl-x", "change the block position"),
 	("ctrl-l/u, alt-c", "clear the kernel ring buffer"),
 	("d, alt-d", "show the dependent modules"),
 	("1..9", "jump to the dependent module"),
@@ -60,6 +62,15 @@ pub fn parse_args() -> clap::ArgMatches<'static> {
 		))
 		.usage("kmon [FLAGS] [OPTIONS] [SUBCOMMANDS]")
 		.before_help(ASCII_LOGO)
+		.arg(
+			Arg::with_name("accent-color")
+				.short("a")
+				.long("accent-color")
+				.value_name("COLOR")
+				.default_value("white")
+				.help("Set the accent color using hex or color name")
+				.takes_value(true),
+		)
 		.arg(
 			Arg::with_name("color")
 				.short("c")

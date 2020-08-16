@@ -2,6 +2,7 @@ use crate::event::Event;
 use crate::kernel::cmd::ModuleCommand;
 use crate::kernel::lkm::KernelModules;
 use crate::kernel::log::KernelLogs;
+use crate::kernel::Kernel;
 use crate::style::{Style, StyledText, Symbol};
 use crate::util;
 use clipboard::{ClipboardContext, ClipboardProvider};
@@ -64,6 +65,24 @@ enum_unitary! {
 	}
 }
 
+/* Sizes of the terminal blocks */
+pub struct BlockSize {
+	pub input: u16,
+	pub info: u16,
+	pub activities: u16,
+}
+
+/* Default initialization values for BlockSize */
+impl Default for BlockSize {
+	fn default() -> Self {
+		Self {
+			input: 60,
+			info: 40,
+			activities: 25,
+		}
+	}
+}
+
 /* User input mode */
 enum_unitary! {
 	#[derive(Copy, Debug, PartialEq)]
@@ -87,7 +106,7 @@ impl InputMode {
 
 /* Implementation of Display for using InputMode members as string */
 impl Display for InputMode {
-	fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		let mut input_mode = *self;
 		if input_mode.is_none() {
 			input_mode = match InputMode::min_value().next_variant() {
@@ -103,6 +122,8 @@ impl Display for InputMode {
 pub struct App {
 	pub selected_block: Block,
 	pub default_block: Block,
+	pub block_size: BlockSize,
+	pub block_index: u8,
 	pub input_mode: InputMode,
 	pub input_query: String,
 	style: Style,
@@ -120,6 +141,8 @@ impl App {
 		Self {
 			selected_block: block,
 			default_block: block,
+			block_size: BlockSize::default(),
+			block_index: 0,
 			input_mode: InputMode::None,
 			input_query: String::new(),
 			style,
@@ -129,6 +152,8 @@ impl App {
 	/* Reset app properties to default. */
 	pub fn refresh(&mut self) {
 		self.selected_block = self.default_block;
+		self.block_size = BlockSize::default();
+		self.block_index = 0;
 		self.input_mode = InputMode::None;
 		self.input_query = String::new();
 	}
@@ -144,6 +169,19 @@ impl App {
 			self.style.default
 		} else {
 			self.style.colored
+		}
+	}
+
+	/**
+	 * Get the size of the selected block.
+	 *
+	 * @return u16
+	 */
+	pub fn block_size(&mut self) -> &mut u16 {
+		match self.selected_block {
+			Block::ModuleInfo => &mut self.block_size.info,
+			Block::Activities => &mut self.block_size.activities,
+			_ => &mut self.block_size.input,
 		}
 	}
 
@@ -179,7 +217,7 @@ impl App {
 	 *
 	 * @param kernel_modules
 	 */
-	pub fn show_help_message(&mut self, kernel_modules: &mut KernelModules) {
+	pub fn show_help_message(&mut self, kernel_modules: &mut KernelModules<'_>) {
 		let key_bindings: Vec<(&str, &str)> = util::KEY_BINDINGS.to_vec();
 		let mut help_text: Vec<Text<'static>> = Vec::new();
 		for (key, desc) in &key_bindings {
@@ -206,7 +244,10 @@ impl App {
 	 * @param kernel_modules
 	 */
 	#[allow(clippy::nonminimal_bool)]
-	pub fn show_dependent_modules(&mut self, kernel_modules: &mut KernelModules) {
+	pub fn show_dependent_modules(
+		&mut self,
+		kernel_modules: &mut KernelModules<'_>,
+	) {
 		let dependent_modules_list = kernel_modules.default_list
 			[kernel_modules.index][2]
 			.split(' ')
@@ -225,7 +266,7 @@ impl App {
 				kernel_modules.current_name,
 				self.style.unicode.get(Symbol::HistoricSite)
 			);
-			let mut dependent_modules: Vec<Text> = Vec::new();
+			let mut dependent_modules: Vec<Text<'_>> = Vec::new();
 			for module in &dependent_modules_list {
 				dependent_modules.push(Text::styled("-", self.style.colored));
 				dependent_modules.push(Text::styled(
@@ -242,6 +283,33 @@ impl App {
 	}
 
 	/**
+	 * Draw a block according to the index.
+	 *
+	 * @param frame
+	 * @param area
+	 * @param kernel
+	 */
+	pub fn draw_dynamic_block<B>(
+		&mut self,
+		frame: &mut Frame<'_, B>,
+		area: Rect,
+		kernel: &mut Kernel,
+	) where
+		B: Backend,
+	{
+		match self.block_index {
+			0 => self.draw_kernel_modules(frame, area, &mut kernel.modules),
+			1 => self.draw_module_info(frame, area, &mut kernel.modules),
+			_ => self.draw_kernel_activities(frame, area, &mut kernel.logs),
+		}
+		if self.block_index < 2 {
+			self.block_index += 1;
+		} else {
+			self.block_index = 0;
+		}
+	}
+
+	/**
 	 * Draw a paragraph widget for using as user input.
 	 *
 	 * @param frame
@@ -250,7 +318,7 @@ impl App {
 	 */
 	pub fn draw_user_input<B>(
 		&self,
-		frame: &mut Frame<B>,
+		frame: &mut Frame<'_, B>,
 		area: Rect,
 		tx: &Sender<Event<Key>>,
 	) where
@@ -294,7 +362,7 @@ impl App {
 	 */
 	pub fn draw_kernel_info<B>(
 		&self,
-		frame: &mut Frame<B>,
+		frame: &mut Frame<'_, B>,
 		area: Rect,
 		info: &[String],
 	) where
@@ -326,9 +394,9 @@ impl App {
 	 */
 	pub fn draw_kernel_modules<B>(
 		&self,
-		frame: &mut Frame<B>,
+		frame: &mut Frame<'_, B>,
 		area: Rect,
-		kernel_modules: &mut KernelModules,
+		kernel_modules: &mut KernelModules<'_>,
 	) where
 		B: Backend,
 	{
@@ -392,9 +460,13 @@ impl App {
 					kernel_modules.list.len(),
 					self.style.unicode.get(Symbol::RightBracket),
 					self.style.unicode.get(Symbol::LeftBracket),
-					((kernel_modules.index + 1) as f64
-						/ kernel_modules.list.len() as f64
-						* 100.0) as usize,
+					if !kernel_modules.list.is_empty() {
+						((kernel_modules.index + 1) as f64
+							/ kernel_modules.list.len() as f64
+							* 100.0) as u64
+					} else {
+						0
+					},
 					self.style.unicode.get(Symbol::RightBracket),
 				)),
 		)
@@ -416,9 +488,9 @@ impl App {
 	 */
 	pub fn draw_module_info<B>(
 		&self,
-		frame: &mut Frame<B>,
+		frame: &mut Frame<'_, B>,
 		area: Rect,
-		kernel_modules: &mut KernelModules,
+		kernel_modules: &mut KernelModules<'_>,
 	) where
 		B: Backend,
 	{
@@ -462,7 +534,7 @@ impl App {
 	 */
 	pub fn draw_kernel_activities<B>(
 		&self,
-		frame: &mut Frame<B>,
+		frame: &mut Frame<'_, B>,
 		area: Rect,
 		kernel_logs: &mut KernelLogs,
 	) where

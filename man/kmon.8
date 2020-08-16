@@ -1,6 +1,6 @@
 .\" Manpage for kmon.
 .\" Contact orhunparmaksiz@gmail.com to correct errors or typos.
-.TH KMON "8" "April 2020" "kmon" "System Administration Utilities"
+.TH KMON "8" "Aug 2020" "kmon" "System Administration Utilities"
 .SH NAME
 kmon \- manage the kernel modules and monitor kernel activities
 .SH SYNOPSIS
@@ -24,6 +24,9 @@ Show Unicode symbols for the block titles
 \fB\-V\fR, \fB\-\-version\fR
 Prints version information
 .SS "OPTIONS:"
+.TP
+\fB\-a\fR, \fB\-\-accent-color\fR <COLOR>
+Set the accent color using hex or color name [default: white]
 .TP
 \fB\-c\fR, \fB\-\-color\fR <COLOR>
 Set the main color using hex or color name [default: darkgray]
@@ -59,6 +62,12 @@ Scroll right/left [kernel activities]
 .TP
 .B ctrl-t/b, home/end
 Scroll to top/bottom [module list]
+.TP
+.B alt-e/s
+Expand/shrink the selected block
+.TP
+.B ctrl-x
+Change the block position
 .TP
 .B ctrl-l/u, alt-c
 Clear the kernel ring buffer

@@ -1,3 +1,6 @@
+#![allow(clippy::tabs_in_doc_comments)]
+#![warn(rust_2018_idioms)]
+
 mod app;
 mod event;
 mod kernel;
@@ -9,6 +12,7 @@ use enum_unitary::{Bounded, EnumUnitary};
 use event::{Event, Events};
 use kernel::cmd::ModuleCommand;
 use kernel::Kernel;
+use std::error::Error;
 use std::io::stdout;
 use termion::event::Key;
 use termion::input::MouseTerminal;
@@ -31,7 +35,7 @@ fn start_tui<B>(
 	mut terminal: Terminal<B>,
 	mut kernel: Kernel,
 	events: &Events,
-) -> Result<(), failure::Error>
+) -> Result<(), Box<dyn Error>>
 where
 	B: Backend,
 {
@@ -44,16 +48,22 @@ where
 			let chunks = Layout::default()
 				.direction(Direction::Vertical)
 				.constraints(
-					[Constraint::Percentage(75), Constraint::Percentage(25)]
-						.as_ref(),
+					[
+						Constraint::Percentage(100 - app.block_size.activities),
+						Constraint::Percentage(app.block_size.activities),
+					]
+					.as_ref(),
 				)
 				.split(f.size());
 			{
 				let chunks = Layout::default()
 					.direction(Direction::Horizontal)
 					.constraints(
-						[Constraint::Percentage(60), Constraint::Percentage(40)]
-							.as_ref(),
+						[
+							Constraint::Percentage(100 - app.block_size.info),
+							Constraint::Percentage(app.block_size.info),
+						]
+						.as_ref(),
 					)
 					.split(chunks[0]);
 				{
@@ -69,8 +79,10 @@ where
 							.direction(Direction::Horizontal)
 							.constraints(
 								[
-									Constraint::Percentage(60),
-									Constraint::Percentage(40),
+									Constraint::Percentage(app.block_size.input),
+									Constraint::Percentage(
+										100 - app.block_size.input,
+									),
 								]
 								.as_ref(),
 							)
@@ -82,11 +94,15 @@ where
 							&kernel.info.current_info,
 						);
 					}
-					app.draw_kernel_modules(&mut f, chunks[1], &mut kernel.modules);
+					if app.block_size.info != 100 {
+						app.draw_dynamic_block(&mut f, chunks[1], &mut kernel);
+					} else {
+						app.block_index += 1;
+					}
 				}
-				app.draw_module_info(&mut f, chunks[1], &mut kernel.modules);
+				app.draw_dynamic_block(&mut f, chunks[1], &mut kernel);
 			}
-			app.draw_kernel_activities(&mut f, chunks[1], &mut kernel.logs);
+			app.draw_dynamic_block(&mut f, chunks[1], &mut kernel);
 		})?;
 		/* Set cursor position if the input mode flag is set. */
 		if !app.input_mode.is_none() {
@@ -173,6 +189,29 @@ where
 									Some(v) => v,
 									None => Block::min_value(),
 								}
+						}
+						/* Expand the selected block. */
+						Key::Alt('e') => {
+							let block_size = app.block_size();
+							if *block_size < 95 {
+								*block_size += 5;
+							} else {
+								*block_size = 100;
+							}
+						}
+						/* Shrink the selected block. */
+						Key::Alt('s') => {
+							let block_size = app.block_size();
+							*block_size =
+								(*block_size).checked_sub(5).unwrap_or_default()
+						}
+						/* Change the block position. */
+						Key::Ctrl('x') => {
+							if app.block_index == 2 {
+								app.block_index = 0;
+							} else {
+								app.block_index += 1;
+							}
 						}
 						/* Scroll to the top of the module list. */
 						Key::Ctrl('t') | Key::Home => {
@@ -462,7 +501,7 @@ where
  *
  * @return Result
  */
-fn main() -> Result<(), failure::Error> {
+fn main() -> Result<(), Box<dyn Error>> {
 	let args = util::parse_args();
 	let kernel = Kernel::new(&args);
 	let events = Events::new(
@@ -488,7 +527,7 @@ mod tests {
 	use std::time::Duration;
 	use tui::backend::TestBackend;
 	#[test]
-	fn test_tui() -> Result<(), failure::Error> {
+	fn test_tui() -> Result<(), Box<dyn Error>> {
 		main()?;
 		let args = util::parse_args();
 		let kernel = Kernel::new(&args);
@@ -500,6 +539,11 @@ mod tests {
 				Key::Char('?'),
 				Key::Ctrl('t'),
 				Key::Ctrl('b'),
+				Key::Alt('e'),
+				Key::Alt('s'),
+				Key::Ctrl('x'),
+				Key::Ctrl('x'),
+				Key::Ctrl('x'),
 				Key::Char('x'),
 				Key::Char('n'),
 				Key::Char('d'),

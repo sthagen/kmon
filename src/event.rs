@@ -82,8 +82,9 @@ impl Events {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use std::error::Error;
 	#[test]
-	fn test_events() -> Result<(), failure::Error> {
+	fn test_events() -> Result<(), Box<dyn Error>> {
 		let kernel_logs = KernelLogs::default();
 		let events = Events::new(100, &kernel_logs);
 		let mut i = 0;
