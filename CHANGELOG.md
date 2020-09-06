@@ -6,13 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.5.0] - 2020-08-27
 ### Added
 - Add alt-e/s keys for expanding/shrinking the selected block
 - Add ctrl-x key for changing the position of a block
 
+### Changed
+- Update the AUR installation step in README.md
+
 ### Fixed
 - Fix the percentage overflow in kernel module table
 - Use the default colors if the accent color is not provided
+
+### Removed
+- Remove the AUR binary package publish step from CD workflow
 
 ## [1.4.0] - 2020-08-05
 ### Added
