@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.3] - 2020-12-15
+### Fixed
+- Install X11 dependencies for crates.io release
+
+## [1.5.2] - 2020-12-15
+### Added
+- Add codecov.yml
+- Add strategy to CD workflow for different targets
+
+### Changed
+- Update kmon.8 to include string "kmod" ([#24](https://github.com/orhun/kmon/issues/24))
+- Update Cargo.toml about project details
+- Update Dockerfile about image and dependency versions
+
+### Removed
+- Remove snapcraft.yaml
+
 ## [1.5.1] - 2020-10-09
 ### Fixed
 - Fix test failing when giving arguments to the test binary
