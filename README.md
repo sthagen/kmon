@@ -110,6 +110,7 @@ kmon is written in [Rust](https://www.rust-lang.org/) and uses [tui-rs](https://
 - [Resources](#resources)
   - [About the project](#about-the-project)
   - [Articles](#articles)
+  - [In the media](#in-the-media)
   - [Gallery](#gallery)
   - [Social Media](#social-media)
 - [Funding](#funding)
@@ -147,7 +148,7 @@ pacman -S kmon
 There are also a development package on [AUR](https://aur.archlinux.org/packages/kmon-git/). Use your favorite [AUR helper](https://wiki.archlinux.org/index.php/AUR_helpers) to install. For example,
 
 ```
-yay -S kmon-git
+paru -S kmon-git
 ```
 
 ### Nixpkgs
@@ -529,6 +530,12 @@ kmon should be tested and reported on different architectures for further develo
 * [Exploring the Linux Kernel by Bob Cromwell](https://cromwell-intl.com/open-source/linux-kernel-details.html)
 * [Anatomy of the Linux loadable kernel module by Terenceli](https://terenceli.github.io/%E6%8A%80%E6%9C%AF/2018/06/02/linux-loadable-module)
 * [Managing kernel modules with kmod by Lucas De Marchi](https://elinux.org/images/8/89/Managing_Kernel_Modules_With_kmod.pdf)
+
+### In the media
+
+* [Manage And Monitor Linux Kernel Modules With Kmon](https://ostechnix.com/manage-and-monitor-linux-kernel-modules-with-kmon/) (
+OSTechNix)
+* [Kmon The Linux Kernel Management And Monitoring Software](https://www.youtube.com/watch?v=lukxf6CnR2o) (Brodie Robertson on YouTube)
 
 ### Gallery
 
