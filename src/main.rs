@@ -4,6 +4,7 @@
 mod app;
 mod event;
 mod kernel;
+mod widgets;
 #[macro_use]
 mod util;
 mod style;
@@ -43,7 +44,7 @@ where
 	let mut app = App::new(Block::ModuleTable, kernel.modules.style.clone());
 	/* Draw terminal and render the widgets. */
 	loop {
-		terminal.draw(|mut f| {
+		terminal.draw(|frame| {
 			let chunks = Layout::default()
 				.direction(Direction::Vertical)
 				.constraints(
@@ -53,7 +54,7 @@ where
 					]
 					.as_ref(),
 				)
-				.split(f.size());
+				.split(frame.size());
 			{
 				let chunks = Layout::default()
 					.direction(Direction::Horizontal)
@@ -86,30 +87,31 @@ where
 								.as_ref(),
 							)
 							.split(chunks[0]);
-						app.draw_user_input(&mut f, chunks[0], &events.tx);
+						app.draw_user_input(frame, chunks[0], &events.tx);
 						app.draw_kernel_info(
-							&mut f,
+							frame,
 							chunks[1],
 							&kernel.info.current_info,
 						);
 					}
 					if app.block_size.info != 100 {
-						app.draw_dynamic_block(&mut f, chunks[1], &mut kernel);
+						app.draw_dynamic_block(frame, chunks[1], &mut kernel);
 					} else {
 						app.block_index += 1;
 					}
 				}
-				app.draw_dynamic_block(&mut f, chunks[1], &mut kernel);
+				app.draw_dynamic_block(frame, chunks[1], &mut kernel);
 			}
-			app.draw_dynamic_block(&mut f, chunks[1], &mut kernel);
+			app.draw_dynamic_block(frame, chunks[1], &mut kernel);
 			if !app.input_mode.is_none() {
-				f.set_cursor(1 + app.input_query.width() as u16, 1);
+				frame.set_cursor(1 + app.input_query.width() as u16, 1);
 			}
 		})?;
 		/* Handle terminal events. */
 		match events.rx.recv()? {
 			/* Key input events. */
 			Event::Input(input) => {
+				let mut hide_options = true;
 				if app.input_mode.is_none() {
 					/* Default input mode. */
 					match input {
@@ -119,7 +121,11 @@ where
 						| Key::Ctrl('c')
 						| Key::Ctrl('d')
 						| Key::Esc => {
-							break;
+							if app.show_options {
+								app.show_options = false;
+							} else {
+								break;
+							}
 						}
 						/* Refresh. */
 						Key::Char('r') | Key::Char('R') | Key::F(5) => {
@@ -130,48 +136,70 @@ where
 						Key::Char('?') | Key::F(1) => {
 							app.show_help_message(&mut kernel.modules);
 						}
+						Key::Char('m') | Key::Char('o') => {
+							app.show_options = true;
+							hide_options = false;
+						}
 						/* Scroll the selected block up. */
 						Key::Up
 						| Key::Char('k')
 						| Key::Char('K')
 						| Key::Alt('k')
-						| Key::Alt('K') => match app.selected_block {
-							Block::ModuleTable => {
-								kernel.modules.scroll_list(ScrollDirection::Up)
+						| Key::Alt('K') => {
+							if app.show_options {
+								app.options.previous();
+								continue;
+							} else {
+								app.options.state.select(Some(0));
 							}
-							Block::ModuleInfo => kernel.modules.scroll_mod_info(
-								ScrollDirection::Up,
-								input == Key::Alt('k') || input == Key::Alt('K'),
-							),
-							Block::Activities => {
-								kernel.logs.scroll(
+							match app.selected_block {
+								Block::ModuleTable => {
+									kernel.modules.scroll_list(ScrollDirection::Up)
+								}
+								Block::ModuleInfo => kernel.modules.scroll_mod_info(
 									ScrollDirection::Up,
 									input == Key::Alt('k') || input == Key::Alt('K'),
-								);
+								),
+								Block::Activities => {
+									kernel.logs.scroll(
+										ScrollDirection::Up,
+										input == Key::Alt('k')
+											|| input == Key::Alt('K'),
+									);
+								}
+								_ => {}
 							}
-							_ => {}
-						},
+						}
 						/* Scroll the selected block down. */
 						Key::Down
 						| Key::Char('j')
 						| Key::Char('J')
 						| Key::Alt('j')
-						| Key::Alt('J') => match app.selected_block {
-							Block::ModuleTable => {
-								kernel.modules.scroll_list(ScrollDirection::Down)
+						| Key::Alt('J') => {
+							if app.show_options {
+								app.options.next();
+								continue;
+							} else {
+								app.options.state.select(Some(0));
 							}
-							Block::ModuleInfo => kernel.modules.scroll_mod_info(
-								ScrollDirection::Down,
-								input == Key::Alt('j') || input == Key::Alt('J'),
-							),
-							Block::Activities => {
-								kernel.logs.scroll(
+							match app.selected_block {
+								Block::ModuleTable => {
+									kernel.modules.scroll_list(ScrollDirection::Down)
+								}
+								Block::ModuleInfo => kernel.modules.scroll_mod_info(
 									ScrollDirection::Down,
 									input == Key::Alt('j') || input == Key::Alt('J'),
-								);
+								),
+								Block::Activities => {
+									kernel.logs.scroll(
+										ScrollDirection::Down,
+										input == Key::Alt('j')
+											|| input == Key::Alt('J'),
+									);
+								}
+								_ => {}
 							}
-							_ => {}
-						},
+						}
 						/* Select the next terminal block. */
 						Key::Left | Key::Char('h') | Key::Char('H') => {
 							app.selected_block =
@@ -213,11 +241,13 @@ where
 						}
 						/* Scroll to the top of the module list. */
 						Key::Ctrl('t') | Key::Home => {
+							app.options.state.select(Some(0));
 							app.selected_block = Block::ModuleTable;
 							kernel.modules.scroll_list(ScrollDirection::Top)
 						}
 						/* Scroll to the bottom of the module list. */
 						Key::Ctrl('b') | Key::End => {
+							app.options.state.select(Some(0));
 							app.selected_block = Block::ModuleTable;
 							kernel.modules.scroll_list(ScrollDirection::Bottom)
 						}
@@ -348,16 +378,53 @@ where
 						| Key::Char('+')
 						| Key::Char('/')
 						| Key::Insert => {
-							app.selected_block = Block::UserInput;
-							app.input_mode = match input {
-								Key::Char('+')
-								| Key::Char('i')
-								| Key::Char('I')
-								| Key::Insert => InputMode::Load,
-								_ => InputMode::Search,
-							};
-							if input != Key::Char('\n') {
-								app.input_query = String::new();
+							if input == Key::Char('\n') && app.show_options {
+								if let Ok(command) = ModuleCommand::try_from(
+									app.options
+										.selected()
+										.map(|(v, _)| v.to_string())
+										.unwrap_or_default(),
+								) {
+									if command == ModuleCommand::Load {
+										events
+											.tx
+											.send(Event::Input(Key::Char('+')))
+											.unwrap();
+									} else {
+										kernel.modules.set_current_command(
+											command,
+											String::new(),
+										);
+									}
+								} else {
+									match app
+										.options
+										.selected()
+										.map(|(v, _)| v.as_ref())
+									{
+										Some("dependent") => {
+											app.show_dependent_modules(
+												&mut kernel.modules,
+											);
+										}
+										Some("copy") => app.set_clipboard_contents(
+											&kernel.modules.current_name,
+										),
+										_ => {}
+									}
+								}
+							} else {
+								app.selected_block = Block::UserInput;
+								app.input_mode = match input {
+									Key::Char('+')
+									| Key::Char('i')
+									| Key::Char('I')
+									| Key::Insert => InputMode::Load,
+									_ => InputMode::Search,
+								};
+								if input != Key::Char('\n') {
+									app.input_query = String::new();
+								}
 							}
 						}
 						/* Other character input. */
@@ -479,6 +546,9 @@ where
 						_ => {}
 					}
 				}
+				if hide_options {
+					app.show_options = false;
+				}
 			}
 			/* Kernel events. */
 			Event::Kernel(logs) => {
@@ -552,6 +622,9 @@ mod tests {
 				Key::Char('<'),
 				Key::Char('>'),
 				Key::Char('\t'),
+				Key::Char('m'),
+				Key::Down,
+				Key::Char('\n'),
 			] {
 				send_key(&tx, key);
 			}

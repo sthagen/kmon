@@ -1,6 +1,6 @@
 [package]
 name = "kmon"
-version = "1.5.5"
+version = "1.6.0"
 description = "Linux kernel manager and activity monitor"
 authors = ["Orhun Parmaksız <orhunparmaksiz@gmail.com>"]
 license = "GPL-3.0"
@@ -11,18 +11,18 @@ repository = "https://github.com/orhun/kmon"
 keywords = ["linux", "kernel", "module", "activity", "monitor"]
 categories = ["command-line-utilities", "os"]
 include = ["src/**/*", "Cargo.*", "LICENSE", "README.md", "CHANGELOG.md"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 clap = "2.33.3"
 tui = "0.16.0"
 termion = "1.5.6"
 bytesize = "1.1.0"
-unicode-width = "0.1.8"
+unicode-width = "0.1.9"
 enum-unitary = "0.4.3"
 enum-iterator = "0.7.0"
 clipboard = "0.5.0"
-colorsys = "0.6.3"
+colorsys = "0.6.5"
 
 [profile.dev]
 opt-level = 0
