@@ -21,7 +21,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --allow-unauthenticated -y -qq \
-            libxcb-shape0-dev libxcb-xfixes0-dev musl-tools
+            libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev musl-tools
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -35,7 +35,10 @@ jobs:
           mkdir assets
           cp -t assets/ target/${{matrix.TARGET}}/release/kmon && strip -s assets/kmon
           cp -t assets/ LICENSE README.md CHANGELOG.md
+          mv target/${{matrix.TARGET}}/man .
           cp -t assets/ --parents man/kmon.8
+          mv target/${{matrix.TARGET}}/completions .
+          cp -t assets/ --parents completions/*
           mv assets/ kmon-${{env.RELEASE_VERSION}}/
           tar -czvf kmon-${{env.RELEASE_VERSION}}-${{matrix.TARGET}}.tar.gz \
             kmon-${{env.RELEASE_VERSION}}/
@@ -70,7 +73,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --allow-unauthenticated -y -qq \
-            libxcb-shape0-dev libxcb-xfixes0-dev
+            libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev
       - name: Publish
         uses: actions-rs/cargo@v1
         with:

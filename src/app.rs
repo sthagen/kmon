@@ -6,9 +6,9 @@ use crate::kernel::Kernel;
 use crate::style::{Style, StyledText, Symbol};
 use crate::util;
 use crate::widgets::StatefulList;
-use clipboard::{ClipboardContext, ClipboardProvider};
-use enum_unitary::{enum_unitary, Bounded, EnumUnitary};
-use std::error::Error;
+use copypasta_ext::display::DisplayServer as ClipboardDisplayServer;
+use copypasta_ext::prelude::ClipboardProvider;
+use enum_iterator::Sequence;
 use std::fmt::{Debug, Display, Formatter};
 use std::slice::Iter;
 use std::sync::mpsc::Sender;
@@ -69,14 +69,13 @@ impl ScrollDirection {
 }
 
 /* Main blocks of the terminal */
-enum_unitary! {
-	#[derive(Copy, Debug, PartialEq, Eq)]
-	pub enum Block {
-		UserInput,
-		ModuleTable,
-		ModuleInfo,
-		Activities,
-	}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Sequence)]
+pub enum Block {
+	UserInput,
+	ModuleTable,
+	ModuleInfo,
+	Activities,
 }
 
 /* Sizes of the terminal blocks */
@@ -98,13 +97,11 @@ impl Default for BlockSize {
 }
 
 /* User input mode */
-enum_unitary! {
-	#[derive(Copy, Debug, PartialEq, Eq)]
-	pub enum InputMode {
-		None,
-		Search,
-		Load,
-	}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Sequence)]
+pub enum InputMode {
+	None,
+	Search,
+	Load,
 }
 
 impl InputMode {
@@ -123,7 +120,7 @@ impl Display for InputMode {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		let mut input_mode = *self;
 		if input_mode.is_none() {
-			input_mode = match InputMode::min_value().next_variant() {
+			input_mode = match InputMode::first().and_then(|v| v.next()) {
 				Some(v) => v,
 				None => input_mode,
 			}
@@ -143,6 +140,7 @@ pub struct App {
 	pub options: StatefulList<(String, String)>,
 	pub show_options: bool,
 	style: Style,
+	clipboard: Option<Box<dyn ClipboardProvider>>,
 }
 
 impl App {
@@ -171,6 +169,13 @@ impl App {
 			),
 			show_options: false,
 			style,
+			clipboard: match ClipboardDisplayServer::select().try_context() {
+				None => {
+					eprintln!("failed to initialize clipboard, no suitable clipboard provider found");
+					None
+				}
+				clipboard => clipboard,
+			},
 		}
 	}
 
@@ -219,13 +224,13 @@ impl App {
 	 *
 	 * @return contents
 	 */
-	pub fn get_clipboard_contents(&self) -> String {
-		let clipboard_context: Result<ClipboardContext, Box<dyn Error>> =
-			ClipboardProvider::new();
-		match clipboard_context {
-			Ok(mut v) => v.get_contents().unwrap_or_default(),
-			Err(_) => String::new(),
+	pub fn get_clipboard_contents(&mut self) -> String {
+		if let Some(clipboard) = self.clipboard.as_mut() {
+			if let Ok(contents) = clipboard.get_contents() {
+				return contents;
+			}
 		}
+		String::new()
 	}
 
 	/**
@@ -233,11 +238,11 @@ impl App {
 	 *
 	 * @param contents
 	 */
-	pub fn set_clipboard_contents(&self, contents: &str) {
-		let clipboard_context: Result<ClipboardContext, Box<dyn Error>> =
-			ClipboardProvider::new();
-		if let Ok(mut v) = clipboard_context {
-			v.set_contents(contents.to_string()).unwrap();
+	pub fn set_clipboard_contents(&mut self, contents: &str) {
+		if let Some(clipboard) = self.clipboard.as_mut() {
+			if let Err(e) = clipboard.set_contents(contents.to_string()) {
+				eprintln!("{}", e);
+			}
 		}
 	}
 

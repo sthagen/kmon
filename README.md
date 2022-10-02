@@ -73,9 +73,9 @@ kmon is written in [Rust](https://www.rust-lang.org/) and uses [tui-rs](https://
   - [Manual](#manual)
     - [Note](#note)
 - [Usage](#usage)
-  - [Flags](#flags)
   - [Options](#options)
-  - [Subcommands](#subcommands)
+  - [Commands](#commands)
+    - [Sort](#sort)
 - [Key Bindings](#key-bindings)
 - [Features](#features)
   - [Help](#help)
@@ -211,58 +211,51 @@ tar -xvzf kmon-*.tar.gz
 
 4. Move binary to `/usr/local/bin/` for running it from the terminal using `kmon` command.
 
-5. Man page could be viewed if [kmon.8](https://github.com/orhun/kmon/blob/master/man/kmon.8) file is copied to `/usr/local/man/man8/` directory.
-
-```
-cp kmon.8 /usr/local/man/man8/
-gzip /usr/local/man/man8/kmon.8
-man kmon
-```
+5. Man page and shell completions are generated at build time in `target` directory.
 
 #### Note
 
 [libxcb](https://xcb.freedesktop.org/) should be installed for using the copy/paste commands of X11.
-[*](https://github.com/aweinstock314/rust-clipboard/issues/67)
 
 e.g: Install `libxcb1-dev` package for Debian/Ubuntu[*](https://github.com/orhun/kmon/issues/2) and `libxcb-devel` package for Fedora/openSUSE/Void Linux.
 
 ## Usage
 
 ```
-kmon [FLAGS] [OPTIONS] [SUBCOMMANDS]
-```
-
-### Flags
-
-```
--h, --help       Prints help information
--r, --reverse    Reverse the kernel module list
--u, --unicode    Show Unicode symbols for the block titles
--V, --version    Prints version information
+kmon [OPTIONS] [COMMAND]
 ```
 
 ### Options
 
 ```
--a, --accent-color <COLOR>    Set the accent color using hex or color name [default: white]
--c, --color <COLOR>           Set the main color using hex or color name [default: darkgray]
--t, --tickrate <MS>           Set the refresh rate of the terminal [default: 250]
+-a, --accent-color <COLOR>  Set the accent color using hex or color name [default: white]
+-c, --color <COLOR>         Set the main color using hex or color name [default: darkgray]
+-t, --tickrate <MS>         Set the refresh rate of the terminal [default: 250]
+-r, --reverse               Reverse the kernel module list
+-u, --unicode               Show Unicode symbols for the block titles
+-h, --help                  Print help information
+-V, --version               Print version information
 ```
 
-### Subcommands
+### Commands
 
 ```
-help    Prints this message or the help of the given subcommand(s)
-sort    Sort kernel modules
+sort  Sort kernel modules
 ```
 
-```
-kmon sort [FLAGS]
+#### Sort
 
-FLAGS:
-    -n, --name         Sort modules by their names
-    -s, --size         Sort modules by their sizes
-    -d, --dependent    Sort modules by their dependent modules
+```
+kmon sort [OPTIONS]
+```
+
+**Options:**
+
+```
+-s, --size       Sort modules by their sizes
+-n, --name       Sort modules by their names
+-d, --dependent  Sort modules by their dependent modules
+-h, --help       Print help information
 ```
 
 ## Key Bindings
