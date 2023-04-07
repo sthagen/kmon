@@ -17,15 +17,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        OS: [ubuntu-latest]
-        TOOLCHAIN: [stable, nightly]
+        OS: [ ubuntu-22.04 ]
+        TOOLCHAIN: [ stable, nightly ]
         TARGET:
           - x86_64-unknown-linux-gnu
           - x86_64-unknown-linux-musl
 
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install dependencies
         run: |
@@ -73,10 +73,8 @@ jobs:
         run: cargo tarpaulin --out Xml --verbose --target ${{ matrix.TARGET }}
 
       - name: Upload reports to codecov.io
-        if: github.event_name != 'pull_request'
-          && matrix.TOOLCHAIN == 'stable'
-          && matrix.TARGET == 'x86_64-unknown-linux-gnu'
-        uses: codecov/codecov-action@v1.0.7
+        if: github.event_name != 'pull_request' && matrix.TOOLCHAIN == 'stable' && matrix.TARGET == 'x86_64-unknown-linux-gnu'
+        uses: codecov/codecov-action@v3.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: cobertura.xml
