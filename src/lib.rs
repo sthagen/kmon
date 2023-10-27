@@ -14,11 +14,11 @@ use crate::kernel::cmd::ModuleCommand;
 use crate::kernel::Kernel;
 use enum_iterator::Sequence;
 use event::{Event, Events};
+use ratatui::backend::Backend;
+use ratatui::layout::{Constraint, Direction, Layout};
+use ratatui::Terminal;
 use std::error::Error;
 use termion::event::Key;
-use tui::backend::Backend;
-use tui::layout::{Constraint, Direction, Layout};
-use tui::Terminal;
 use unicode_width::UnicodeWidthStr;
 
 /**
@@ -561,10 +561,10 @@ where
 mod tests {
 	use super::*;
 	use clap::ArgMatches;
+	use ratatui::backend::TestBackend;
 	use std::sync::mpsc::Sender;
 	use std::thread;
 	use std::time::Duration;
-	use tui::backend::TestBackend;
 	#[test]
 	fn test_tui() -> Result<(), Box<dyn Error>> {
 		let args = ArgMatches::default();
@@ -573,7 +573,7 @@ mod tests {
 		let tx = events.tx.clone();
 		thread::spawn(move || {
 			/* Test the general keys. */
-			for key in vec![
+			for key in [
 				Key::Char('?'),
 				Key::Ctrl('t'),
 				Key::Ctrl('b'),
@@ -604,10 +604,10 @@ mod tests {
 			}
 			send_key(&tx, Key::Char('r'));
 			/* Test the switch keys. */
-			for arrow_key in vec![Key::Right, Key::Left] {
-				for selected_key in vec![arrow_key; Block::CARDINALITY] {
+			for arrow_key in [Key::Right, Key::Left] {
+				for selected_key in [arrow_key; Block::CARDINALITY] {
 					send_key(&tx, selected_key);
-					for key in vec![
+					for key in [
 						Key::Up,
 						Key::Down,
 						Key::Down,
@@ -621,7 +621,7 @@ mod tests {
 				}
 			}
 			/* Test the input mode keys. */
-			for key in vec![
+			for key in [
 				Key::Char('v'),
 				Key::Delete,
 				Key::Char('~'),

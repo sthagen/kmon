@@ -9,18 +9,17 @@ use crate::widgets::StatefulList;
 use copypasta_ext::display::DisplayServer as ClipboardDisplayServer;
 use copypasta_ext::ClipboardProviderExt;
 use enum_iterator::Sequence;
+use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
+use ratatui::style::Style as TuiStyle;
+use ratatui::text::{Line, Span, Text};
+use ratatui::widgets::{
+	Block as TuiBlock, Borders, Clear, List, ListItem, Paragraph, Row, Table, Wrap,
+};
+use ratatui::Frame;
 use std::fmt::{Debug, Display, Formatter};
 use std::slice::Iter;
 use std::sync::mpsc::Sender;
 use termion::event::Key;
-use tui::backend::Backend;
-use tui::layout::{Alignment, Constraint, Direction, Layout, Rect};
-use tui::style::Style as TuiStyle;
-use tui::text::{Span, Spans, Text};
-use tui::widgets::{
-	Block as TuiBlock, Borders, Clear, List, ListItem, Paragraph, Row, Table, Wrap,
-};
-use tui::Frame;
 use unicode_width::UnicodeWidthStr;
 
 /* Table header of the module table */
@@ -256,12 +255,12 @@ impl App {
 		let mut help_text = Vec::new();
 		let mut help_text_raw = Vec::new();
 		for (key, desc) in &key_bindings {
-			help_text.push(Spans::from(Span::styled(
+			help_text.push(Line::from(Span::styled(
 				format!("{}:", &key),
 				self.style.colored,
 			)));
 			help_text_raw.push(format!("{key}:"));
-			help_text.push(Spans::from(Span::styled(
+			help_text.push(Line::from(Span::styled(
 				format!("{}{}", self.style.unicode.get(Symbol::Blank), &desc),
 				self.style.default,
 			)));
@@ -306,7 +305,7 @@ impl App {
 			);
 			let mut dependent_modules = Vec::new();
 			for module in &dependent_modules_list {
-				dependent_modules.push(Spans::from(vec![
+				dependent_modules.push(Line::from(vec![
 					Span::styled("-", self.style.colored),
 					Span::styled(format!(" {module}"), self.style.default),
 				]));
@@ -325,14 +324,12 @@ impl App {
 	 * @param area
 	 * @param kernel
 	 */
-	pub fn draw_dynamic_block<B>(
+	pub fn draw_dynamic_block(
 		&mut self,
-		frame: &mut Frame<'_, B>,
+		frame: &mut Frame,
 		area: Rect,
 		kernel: &mut Kernel,
-	) where
-		B: Backend,
-	{
+	) {
 		match self.block_index {
 			0 => self.draw_kernel_modules(frame, area, &mut kernel.modules),
 			1 => self.draw_module_info(frame, area, &mut kernel.modules),
@@ -352,14 +349,12 @@ impl App {
 	 * @param area
 	 * @param tx
 	 */
-	pub fn draw_user_input<B>(
+	pub fn draw_user_input(
 		&self,
-		frame: &mut Frame<'_, B>,
+		frame: &mut Frame,
 		area: Rect,
 		tx: &Sender<Event<Key>>,
-	) where
-		B: Backend,
-	{
+	) {
 		frame.render_widget(
 			Paragraph::new(Span::raw(self.input_query.to_string()))
 				.block(
@@ -399,14 +394,7 @@ impl App {
 	 * @param area
 	 * @param info
 	 */
-	pub fn draw_kernel_info<B>(
-		&self,
-		frame: &mut Frame<'_, B>,
-		area: Rect,
-		info: &[String],
-	) where
-		B: Backend,
-	{
+	pub fn draw_kernel_info(&self, frame: &mut Frame, area: Rect, info: &[String]) {
 		frame.render_widget(
 			Paragraph::new(Span::raw(&info[1]))
 				.block(
@@ -436,14 +424,12 @@ impl App {
 	 * @param area
 	 * @param kernel_modules
 	 */
-	pub fn draw_kernel_modules<B>(
+	pub fn draw_kernel_modules(
 		&mut self,
-		frame: &mut Frame<'_, B>,
+		frame: &mut Frame,
 		area: Rect,
 		kernel_modules: &mut KernelModules<'_>,
-	) where
-		B: Backend,
-	{
+	) {
 		/* Filter the module list depending on the input query. */
 		let mut kernel_module_list = kernel_modules.default_list.clone();
 		if (self.input_mode == InputMode::None
@@ -540,14 +526,12 @@ impl App {
 	 * @param frame
 	 * @param area
 	 */
-	pub fn draw_options_menu<B>(
+	pub fn draw_options_menu(
 		&mut self,
-		frame: &mut Frame<'_, B>,
+		frame: &mut Frame,
 		area: Rect,
 		kernel_modules: &mut KernelModules<'_>,
-	) where
-		B: Backend,
-	{
+	) {
 		let block_title = format!(
 			"Options ({})",
 			kernel_modules.list[kernel_modules.index][0]
@@ -572,7 +556,7 @@ impl App {
 			.items
 			.iter()
 			.map(|(_, text)| text.width())
-			.chain(vec![block_title.width()].into_iter())
+			.chain(vec![block_title.width()])
 			.max()
 			.map(|v| v as f32 + 7.)
 		{
@@ -626,14 +610,12 @@ impl App {
 	 * @param area
 	 * @param kernel_modules
 	 */
-	pub fn draw_module_info<B>(
+	pub fn draw_module_info(
 		&self,
-		frame: &mut Frame<'_, B>,
+		frame: &mut Frame,
 		area: Rect,
 		kernel_modules: &mut KernelModules<'_>,
-	) where
-		B: Backend,
-	{
+	) {
 		frame.render_widget(
 			Paragraph::new(kernel_modules.current_info.get())
 				.block(
@@ -676,14 +658,12 @@ impl App {
 	 * @param area
 	 * @param kernel_logs
 	 */
-	pub fn draw_kernel_activities<B>(
+	pub fn draw_kernel_activities(
 		&self,
-		frame: &mut Frame<'_, B>,
+		frame: &mut Frame,
 		area: Rect,
 		kernel_logs: &mut KernelLogs,
-	) where
-		B: Backend,
-	{
+	) {
 		frame.render_widget(
 			Paragraph::new(StyledText::default().stylize_data(
 				kernel_logs.select(area.height, 2),
@@ -715,8 +695,8 @@ mod tests {
 	use crate::kernel::info;
 	use crate::kernel::lkm::ListArgs;
 	use clap::ArgMatches;
-	use tui::backend::TestBackend;
-	use tui::Terminal;
+	use ratatui::backend::TestBackend;
+	use ratatui::Terminal;
 	#[test]
 	fn test_app() {
 		let args = ArgMatches::default();
@@ -731,32 +711,24 @@ mod tests {
 		let backend = TestBackend::new(20, 10);
 		let mut terminal = Terminal::new(backend).unwrap();
 		terminal
-			.draw(|mut f| {
+			.draw(|f| {
 				let size = f.size();
 				app.selected_block = Block::UserInput;
-				app.draw_user_input(
-					&mut f,
-					size,
-					&Events::new(100, &kernel_logs).tx,
-				);
-				app.draw_kernel_info(
-					&mut f,
-					size,
-					&info::KernelInfo::new().current_info,
-				);
+				app.draw_user_input(f, size, &Events::new(100, &kernel_logs).tx);
+				app.draw_kernel_info(f, size, &info::KernelInfo::new().current_info);
 				app.input_query = String::from("a");
-				app.draw_kernel_modules(&mut f, size, &mut kernel_modules);
-				app.draw_module_info(&mut f, size, &mut kernel_modules);
-				app.draw_kernel_activities(&mut f, size, &mut kernel_logs);
+				app.draw_kernel_modules(f, size, &mut kernel_modules);
+				app.draw_module_info(f, size, &mut kernel_modules);
+				app.draw_kernel_activities(f, size, &mut kernel_logs);
 			})
 			.unwrap();
 	}
 	#[test]
 	fn test_input_mode() {
 		let mut input_mode = InputMode::Load;
-		assert_eq!(false, input_mode.is_none());
-		assert_eq!(true, input_mode.to_string().contains("Load"));
+		assert!(!input_mode.is_none());
+		assert!(input_mode.to_string().contains("Load"));
 		input_mode = InputMode::None;
-		assert_eq!(true, input_mode.to_string().contains("Search"));
+		assert!(input_mode.to_string().contains("Search"));
 	}
 }

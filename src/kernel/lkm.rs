@@ -4,8 +4,8 @@ use crate::style::{Style, StyledText, Symbol};
 use crate::util;
 use bytesize::ByteSize;
 use clap::ArgMatches;
+use ratatui::text::{Line, Span, Text};
 use std::slice::Iter;
-use tui::text::{Span, Spans, Text};
 
 /* Type of the sorting of module list */
 #[derive(Clone, Copy, Debug)]
@@ -168,15 +168,15 @@ impl KernelModules<'_> {
 			self.current_info.set(
 				Text::from({
 					let mut spans = vec![
-						Spans::from(Span::styled(
+						Line::from(Span::styled(
 							"Execute the following command? [y/N]:",
 							self.style.colored,
 						)),
-						Spans::from(Span::styled(
+						Line::from(Span::styled(
 							self.get_current_command().cmd,
 							self.style.default,
 						)),
-						Spans::default(),
+						Line::default(),
 					];
 					spans.append(
 						&mut Text::styled(
@@ -207,15 +207,15 @@ impl KernelModules<'_> {
 					self.current_info.set(
 						Text::from({
 							let mut spans = vec![
-								Spans::from(Span::styled(
+								Line::from(Span::styled(
 									"Failed to execute command:",
 									self.style.colored,
 								)),
-								Spans::from(Span::styled(
+								Line::from(Span::styled(
 									format!("'{}'", self.get_current_command().cmd),
 									self.style.default,
 								)),
-								Spans::default(),
+								Line::default(),
 							];
 							spans.append(
 								&mut Text::styled(e.to_string(), self.style.default)
@@ -420,15 +420,15 @@ mod tests {
 		kernel_modules
 			.set_current_command(ModuleCommand::Load, String::from("test"));
 		assert_eq!("test", kernel_modules.current_name);
-		assert_eq!(false, kernel_modules.execute_command());
+		assert!(!kernel_modules.execute_command());
 		kernel_modules.set_current_command(ModuleCommand::Load, String::new());
 		kernel_modules.scroll_list(ScrollDirection::Top);
-		for command in vec![
+		for command in [
 			ModuleCommand::Unload,
 			ModuleCommand::Blacklist,
 			ModuleCommand::None,
 		] {
-			kernel_modules.set_current_command(command.clone(), String::new());
+			kernel_modules.set_current_command(command, String::new());
 			assert_eq!(!command.is_none(), kernel_modules.cancel_execution());
 		}
 	}
