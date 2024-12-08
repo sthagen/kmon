@@ -35,6 +35,7 @@ impl SortType {
 pub struct ListArgs {
 	sort: SortType,
 	reverse: bool,
+	regex: bool,
 }
 
 impl ListArgs {
@@ -54,7 +55,12 @@ impl ListArgs {
 			sort: sort_type,
 			reverse: args.try_get_one::<bool>("reverse").ok().flatten()
 				== Some(&true),
+			regex: args.try_get_one::<bool>("regex").ok().flatten() == Some(&true),
 		}
+	}
+
+	pub fn regex(&self) -> bool {
+		self.regex
 	}
 }
 
@@ -117,7 +123,7 @@ impl KernelModules<'_> {
 				used_modules.pop();
 			}
 			let module_size =
-				ByteSize::b(columns[1].to_string().parse().unwrap_or(0)).to_string();
+				ByteSize::b(columns[1].parse().unwrap_or(0)).to_string_as(true);
 			module_list.push(vec![module_name, module_size, used_modules]);
 		}
 		// Reverse the kernel modules if the argument is provided.
