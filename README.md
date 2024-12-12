@@ -107,6 +107,7 @@ kmon is written in [Rust](https://www.rust-lang.org/) and uses [Ratatui](https:/
     - [Changing the accent color](#changing-the-accent-color)
   - [Unicode symbols](#unicode-symbols)
   - [Setting the terminal tick rate](#setting-the-terminal-tick-rate)
+  - [Searching modules by regular expression](#searching-modules-by-regular-expression)
 - [Roadmap](#roadmap)
   - [Accessibility](#accessibility)
   - [Dependencies](#dependencies)
@@ -139,7 +140,7 @@ kmon is written in [Rust](https://www.rust-lang.org/) and uses [Ratatui](https:/
 cargo install kmon
 ```
 
-The minimum supported Rust version (MSRV) is `1.70.0`.
+The minimum supported Rust version (MSRV) is `1.74.1`.
 
 ### Arch Linux
 
