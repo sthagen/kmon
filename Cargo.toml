@@ -1,6 +1,6 @@
 [package]
 name = "kmon"
-version = "1.7.0"
+version = "1.7.1"
 description = "Linux kernel manager and activity monitor"
 authors = ["Orhun Parmaksız <orhunparmaksiz@gmail.com>"]
 license = "GPL-3.0"
@@ -24,7 +24,7 @@ colorsys = "0.6.7"
 enum-iterator = "2.1.0"
 clap = "4.5.23"
 copypasta-ext = "0.4.4"
-regex = "1.11.1"
+regex-lite = "0.1.6"
 
 [build-dependencies]
 clap_mangen = "0.2.24"
